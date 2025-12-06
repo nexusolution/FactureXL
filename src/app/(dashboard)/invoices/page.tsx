@@ -1,0 +1,424 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useSession } from "next-auth/react";
+import { useSearchParams } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Plus, Search, Trash2, Edit, Eye, Download, CreditCard, Banknote, Landmark, CheckCircle } from "lucide-react";
+import { formatDate } from "@/lib/utils";
+import { toast as customToast } from "@/lib/toast";
+import { downloadInvoicePDF } from "@/lib/pdf-generator";
+import Link from "next/link";
+import { TableSkeleton } from "@/components/ui/loading";
+import { useConfirm } from "@/components/ui/confirm-dialog";
+import axios from "axios";
+
+export default function InvoicesPage() {
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState<"all" | "paid" | "pending">("all");
+  const [selectedInvoices, setSelectedInvoices] = useState<string[]>([]);
+  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<"card" | "transfer" | "debit">("card");
+  const queryClient = useQueryClient();
+  const confirm = useConfirm();
+  const { data: session } = useSession();
+  const searchParams = useSearchParams();
+
+  const isClient = session?.user?.role === "CLIENT";
+  const isOwnerOrAdmin = session?.user?.role === "OWNER" || session?.user?.role === "ADMIN";
+
+  // Handle Stripe payment callback
+  useEffect(() => {
+    const payment = searchParams.get("payment");
+    if (payment === "success") {
+      customToast.success("Paiement effectué avec succès!");
+      queryClient.invalidateQueries({ queryKey: ["invoices"] });
+      setSelectedInvoices([]);
+      // Clear URL parameters
+      window.history.replaceState({}, "", "/invoices");
+    } else if (payment === "cancelled") {
+      customToast.warning("Paiement annulé");
+      // Clear URL parameters
+      window.history.replaceState({}, "", "/invoices");
+    }
+  }, [searchParams, queryClient]);
+
+  const { data: invoices = [], isLoading } = useQuery({
+    queryKey: ["invoices"],
+    queryFn: async () => {
+      const res = await fetch("/api/invoices?type=invoice");
+      return res.json();
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await axios.delete(`/api/invoices/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["invoices"] });
+      customToast.success("Facture supprimée avec succès");
+    },
+    onError: () => {
+      customToast.error("Erreur lors de la suppression");
+    },
+  });
+
+  const markPaidMutation = useMutation({
+    mutationFn: async ({ id, method }: { id: string; method: string }) => {
+      await axios.put(`/api/invoices/${id}`, {
+        paid: true,
+        paymentDate: new Date().toISOString(),
+        lastPaymentMethod: method,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["invoices"] });
+      customToast.success("Facture marquée comme payée");
+      setSelectedInvoices([]);
+      setShowPaymentDialog(false);
+    },
+    onError: () => {
+      customToast.error("Erreur lors du paiement");
+    },
+  });
+
+  const batchPaymentMutation = useMutation({
+    mutationFn: async ({ ids, method }: { ids: string[]; method: string }) => {
+      await Promise.all(
+        ids.map((id) =>
+          axios.put(`/api/invoices/${id}`, {
+            paid: true,
+            paymentDate: new Date().toISOString(),
+            lastPaymentMethod: method,
+          })
+        )
+      );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["invoices"] });
+      customToast.success("Factures payées avec succès");
+      setSelectedInvoices([]);
+      setShowPaymentDialog(false);
+    },
+    onError: () => {
+      customToast.error("Erreur lors du paiement groupé");
+    },
+  });
+
+  const filteredInvoices = invoices.filter((inv: any) => {
+    const matchesSearch =
+      inv.ref?.toLowerCase().includes(search.toLowerCase()) ||
+      inv.client?.name?.toLowerCase().includes(search.toLowerCase());
+    const matchesFilter =
+      filter === "all" ||
+      (filter === "paid" && inv.paid) ||
+      (filter === "pending" && !inv.paid);
+    return matchesSearch && matchesFilter;
+  });
+
+  const handleInvoiceSelection = (id: string) => {
+    setSelectedInvoices((prev) =>
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
+    );
+  };
+
+  const handlePayment = async (method: "card" | "transfer" | "debit") => {
+    if (method === "card") {
+      // Stripe integration
+      if (selectedInvoices.length === 0) {
+        customToast.error("Veuillez sélectionner au moins une facture");
+        return;
+      }
+
+      try {
+        customToast.info("Création de la session de paiement...");
+
+        const response = await axios.post("/api/stripe/create-checkout", {
+          invoiceIds: selectedInvoices,
+        });
+
+        if (response.data.url) {
+          // Redirect to Stripe Checkout
+          window.location.href = response.data.url;
+        } else {
+          customToast.error("Erreur lors de la création de la session Stripe");
+        }
+      } catch (error) {
+        console.error("Error creating Stripe checkout:", error);
+        customToast.error("Erreur lors de la redirection vers Stripe");
+      }
+    } else if (method === "transfer") {
+      if (selectedInvoices.length > 0) {
+        batchPaymentMutation.mutate({ ids: selectedInvoices, method: "Virement" });
+      }
+    } else if (method === "debit") {
+      if (selectedInvoices.length > 0) {
+        batchPaymentMutation.mutate({ ids: selectedInvoices, method: "Prélèvement" });
+      }
+    }
+  };
+
+  const calculateSelectedTotal = () => {
+    return selectedInvoices.reduce((sum, id) => {
+      const invoice = invoices.find((inv: any) => inv.id === id);
+      return sum + (invoice?.total || 0);
+    }, 0);
+  };
+
+  const handleDownloadPDF = async (invoiceId: string) => {
+    try {
+      customToast.info("Génération du PDF en cours...");
+
+      // Fetch full invoice details with company info
+      const response = await axios.get(`/api/invoices/${invoiceId}`);
+      const invoiceData = response.data;
+
+      // Generate and download PDF
+      downloadInvoicePDF(invoiceData, invoiceData.company);
+
+      customToast.success("PDF généré avec succès");
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      customToast.error("Erreur lors de la génération du PDF");
+    }
+  };
+
+  return (
+    <div className="container mx-auto py-6">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">Factures</h1>
+          <p className="text-muted-foreground mt-1">Gérez vos factures</p>
+        </div>
+        {isOwnerOrAdmin && (
+          <Link href="/invoices/new">
+            <Button className="btn-angular bg-primary text-white hover:bg-primary/90">
+              <Plus className="mr-2 h-4 w-4" /> Nouvelle facture
+            </Button>
+          </Link>
+        )}
+      </div>
+
+      {/* Payment Bar for Clients */}
+      {isClient && selectedInvoices.length > 0 && (
+        <Card className="card-angular mb-6">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <span className="font-semibold text-foreground">
+                  {selectedInvoices.length} facture(s) sélectionnée(s)
+                </span>
+                <span className="text-2xl font-bold text-primary">
+                  {calculateSelectedTotal().toFixed(2)} XPF
+                </span>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  className="btn-angular bg-primary text-white hover:bg-primary/90"
+                  onClick={() => handlePayment("card")}
+                >
+                  <CreditCard className="mr-2 h-4 w-4" />
+                  Carte
+                </Button>
+                <Button
+                  className="btn-angular bg-secondary text-white hover:bg-secondary/90"
+                  onClick={() => handlePayment("transfer")}
+                >
+                  <Banknote className="mr-2 h-4 w-4" />
+                  Virement
+                </Button>
+                <Button
+                  className="btn-angular bg-info text-white hover:bg-info/90"
+                  onClick={() => handlePayment("debit")}
+                >
+                  <Landmark className="mr-2 h-4 w-4" />
+                  Prélèvement
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Main Card */}
+      <Card className="card-angular">
+        <CardHeader className="bg-gradient-to-r from-blue-50 to-cyan-50 border-b">
+          <div className="flex flex-col sm:flex-row gap-4 justify-between">
+            <div className="relative flex-1 max-w-sm">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Rechercher par référence ou client..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="form-field-angular pl-9"
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant={filter === "all" ? "default" : "outline"}
+                className="btn-angular"
+                size="sm"
+                onClick={() => setFilter("all")}
+              >
+                Toutes
+              </Button>
+              <Button
+                variant={filter === "paid" ? "default" : "outline"}
+                className="btn-angular"
+                size="sm"
+                onClick={() => setFilter("paid")}
+              >
+                Payées
+              </Button>
+              <Button
+                variant={filter === "pending" ? "default" : "outline"}
+                className="btn-angular"
+                size="sm"
+                onClick={() => setFilter("pending")}
+              >
+                En attente
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="p-6">
+          {isLoading ? (
+            <TableSkeleton rows={5} cols={isClient ? 7 : 8} />
+          ) : filteredInvoices.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              <p className="text-lg">Aucune facture trouvée</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="table-angular">
+                <thead>
+                  <tr>
+                    {isClient && <th>Paiement</th>}
+                    <th>#</th>
+                    <th>Client</th>
+                    <th>Référence</th>
+                    <th>Date de création</th>
+                    <th>Total HT</th>
+                    <th>Total TTC</th>
+                    <th>Statut</th>
+                    <th>Date de paiement</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredInvoices.map((invoice: any, index: number) => (
+                    <tr key={invoice.id} className="hover:bg-muted/20 transition-colors">
+                      {isClient && (
+                        <td>
+                          {!invoice.paid && (
+                            <input
+                              type="checkbox"
+                              checked={selectedInvoices.includes(invoice.id)}
+                              onChange={() => handleInvoiceSelection(invoice.id)}
+                              className="w-4 h-4 text-primary focus:ring-primary border-gray-300 rounded"
+                            />
+                          )}
+                        </td>
+                      )}
+                      <td className="font-medium">{index + 1}</td>
+                      <td>{invoice.client?.name || "-"}</td>
+                      <td className="font-semibold text-primary">{invoice.ref}</td>
+                      <td>{formatDate(invoice.createdAt)}</td>
+                      <td className="font-medium">{invoice.totalHT?.toFixed(2) || "0.00"} XPF</td>
+                      <td className="font-bold text-primary">
+                        {invoice.total?.toFixed(2) || "0.00"} XPF
+                      </td>
+                      <td>
+                        {invoice.paid ? (
+                          <Badge variant="success" className="cursor-default">
+                            <CheckCircle className="h-3 w-3 mr-1" />
+                            Payée
+                          </Badge>
+                        ) : (
+                          <Badge
+                            variant="warning"
+                            className={isOwnerOrAdmin ? "cursor-pointer hover:opacity-80" : ""}
+                            onClick={() =>
+                              isOwnerOrAdmin &&
+                              markPaidMutation.mutate({ id: invoice.id, method: "Manuel" })
+                            }
+                          >
+                            En attente
+                          </Badge>
+                        )}
+                      </td>
+                      <td>
+                        {invoice.paymentDate ? formatDate(invoice.paymentDate) : "-"}
+                      </td>
+                      <td>
+                        <div className="flex items-center justify-center gap-1">
+                          {isOwnerOrAdmin && (
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                title="Modifier"
+                                asChild
+                              >
+                                <Link href={`/invoices/${invoice.id}`}>
+                                  <Edit className="h-4 w-4" />
+                                </Link>
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                title="Télécharger PDF"
+                                onClick={() => handleDownloadPDF(invoice.id)}
+                              >
+                                <Download className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                title="Supprimer"
+                                className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                onClick={async () => {
+                                  if (
+                                    await confirm({
+                                      title: "Supprimer la facture",
+                                      message: "Êtes-vous sûr de vouloir supprimer cette facture ?",
+                                      type: "danger",
+                                    })
+                                  ) {
+                                    deleteMutation.mutate(invoice.id);
+                                  }
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </>
+                          )}
+                          {isClient && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              title="Télécharger PDF"
+                              onClick={() => handleDownloadPDF(invoice.id)}
+                            >
+                              <Download className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

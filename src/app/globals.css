@@ -1,0 +1,135 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Angular color palette converted to HSL */
+    --background: 220 33% 96%; /* #f1f3f7 */
+    --foreground: 210 18% 11%; /* #181c32 */
+    --card: 0 0% 100%; /* #ffffff */
+    --card-foreground: 210 18% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 210 18% 11%;
+    --primary: 203 93% 54%; /* #199ef7 - Angular primary blue */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 99 52% 29%; /* #38761d - Angular green */
+    --secondary-foreground: 0 0% 100%;
+    --muted: 210 5% 35%; /* #57595b - Angular muted gray */
+    --muted-foreground: 210 7% 67%; /* #a1a5b7 */
+    --accent: 203 93% 54%; /* Same as primary */
+    --accent-foreground: 0 0% 100%;
+    --destructive: 356 89% 49%; /* #f20c1f - Angular danger red */
+    --destructive-foreground: 0 0% 100%;
+    --success: 196 73% 56%; /* #32bbed - Angular success */
+    --success-foreground: 0 0% 100%;
+    --warning: 28 96% 47%; /* #ea7005 - Angular warning orange */
+    --warning-foreground: 0 0% 100%;
+    --info: 214 48% 47%; /* #3b6ab3 - Angular info blue */
+    --info-foreground: 0 0% 100%;
+    --border: 220 13% 91%; /* Light border */
+    --input: 210 20% 96%; /* #f5f8fa - Angular input background */
+    --ring: 203 93% 54%; /* Primary color for focus rings */
+    --radius: 0.85rem; /* Angular card border-radius */
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 168 76% 42%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 168 76% 42%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Open Sans', 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+      'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+    font-size: 14px;
+    font-weight: 400;
+  }
+}
+
+/* Import Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Open+Sans:wght@400;500;600;700&display=swap');
+
+/* Utility classes to match Angular styling */
+@layer utilities {
+  /* Table styles matching Angular */
+  .table-angular {
+    @apply w-full text-center;
+  }
+
+  .table-angular th {
+    @apply text-sm font-semibold text-muted-foreground pb-2 border-b border-dashed;
+  }
+
+  .table-angular td {
+    @apply py-1 px-1 text-xs border-b border-dashed;
+  }
+
+  /* Form field styles */
+  .form-field-angular {
+    @apply bg-input rounded-[0.475rem] border border-border px-3 py-2;
+  }
+
+  /* Button styles matching Angular */
+  .btn-angular {
+    @apply rounded-[0.475rem] px-5 py-[7px] font-medium transition-all duration-150;
+  }
+
+  /* Badge variants matching Angular */
+  .badge-success {
+    @apply inline-flex items-center rounded-md bg-[#32bbed]/10 px-2 py-1 text-xs font-medium text-[#32bbed] ring-1 ring-inset ring-[#32bbed]/20;
+  }
+
+  .badge-danger {
+    @apply inline-flex items-center rounded-md bg-[#f20c1f]/10 px-2 py-1 text-xs font-medium text-[#f20c1f] ring-1 ring-inset ring-[#f20c1f]/20;
+  }
+
+  .badge-warning {
+    @apply inline-flex items-center rounded-md bg-[#ea7005]/10 px-2 py-1 text-xs font-medium text-[#ea7005] ring-1 ring-inset ring-[#ea7005]/20;
+  }
+
+  .badge-info {
+    @apply inline-flex items-center rounded-md bg-[#3b6ab3]/10 px-2 py-1 text-xs font-medium text-[#3b6ab3] ring-1 ring-inset ring-[#3b6ab3]/20;
+  }
+
+  /* Label styles */
+  .label-angular {
+    @apply text-[13px] font-medium text-foreground;
+  }
+
+  .label-title {
+    @apply text-[17px] font-medium text-primary;
+  }
+
+  /* Card styles */
+  .card-angular {
+    @apply rounded-[0.85rem] bg-card shadow-none border-0;
+  }
+
+  /* Pagination styles */
+  .pagination-angular {
+    @apply h-10 rounded-[0.475rem];
+  }
+}
