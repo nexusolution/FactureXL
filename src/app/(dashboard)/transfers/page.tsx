@@ -13,8 +13,10 @@ import { toast as customToast } from "@/lib/toast";
 import { TableSkeleton } from "@/components/ui/loading";
 import { useConfirm } from "@/components/ui/confirm-dialog";
 import axios from "axios";
+import { useLanguage } from "@/lib/i18n";
 
 export default function TransfersPage() {
+  const { t } = useLanguage();
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<"all" | "confirmed" | "pending">("all");
   const queryClient = useQueryClient();
@@ -104,9 +106,9 @@ export default function TransfersPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Gestion des Virements</h1>
+          <h1 className="text-3xl font-bold text-foreground">{t("transferManagement")}</h1>
           <p className="text-muted-foreground mt-1">
-            Confirmez ou rejetez les paiements par virement
+            {t("confirmOrRejectTransfers")}
           </p>
         </div>
       </div>
@@ -117,7 +119,7 @@ export default function TransfersPage() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground mb-1">En Attente</p>
+                <p className="text-sm text-muted-foreground mb-1">{t("pending")}</p>
                 <p className="text-3xl font-bold text-warning">{stats.pending}</p>
               </div>
               <div className="h-12 w-12 rounded-full bg-warning/10 flex items-center justify-center">
@@ -131,7 +133,7 @@ export default function TransfersPage() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground mb-1">Confirmés</p>
+                <p className="text-sm text-muted-foreground mb-1">{t("confirmed")}</p>
                 <p className="text-3xl font-bold text-success">{stats.confirmed}</p>
               </div>
               <div className="h-12 w-12 rounded-full bg-success/10 flex items-center justify-center">
@@ -145,7 +147,7 @@ export default function TransfersPage() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground mb-1">Total</p>
+                <p className="text-sm text-muted-foreground mb-1">{t("total")}</p>
                 <p className="text-3xl font-bold text-primary">
                   {stats.total.toFixed(2)} XPF
                 </p>
@@ -161,7 +163,7 @@ export default function TransfersPage() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground mb-1">Montant Confirmé</p>
+                <p className="text-sm text-muted-foreground mb-1">{t("confirmedAmount")}</p>
                 <p className="text-3xl font-bold text-success">
                   {stats.confirmedAmount.toFixed(2)} XPF
                 </p>
@@ -176,12 +178,12 @@ export default function TransfersPage() {
 
       {/* Main Card */}
       <Card className="card-angular">
-        <CardHeader className="bg-gradient-to-r from-blue-50 to-cyan-50 border-b">
+        <CardHeader className="border-b">
           <div className="flex flex-col sm:flex-row gap-4 justify-between">
             <div className="relative flex-1 max-w-sm">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Rechercher par référence ou client..."
+                placeholder={t("searchByRefOrClient")}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="form-field-angular pl-9"
@@ -194,7 +196,7 @@ export default function TransfersPage() {
                 size="sm"
                 onClick={() => setFilter("all")}
               >
-                Tous
+                {t("all")}
               </Button>
               <Button
                 variant={filter === "confirmed" ? "default" : "outline"}
@@ -202,7 +204,7 @@ export default function TransfersPage() {
                 size="sm"
                 onClick={() => setFilter("confirmed")}
               >
-                Confirmés
+                {t("confirmed")}
               </Button>
               <Button
                 variant={filter === "pending" ? "default" : "outline"}
@@ -210,7 +212,7 @@ export default function TransfersPage() {
                 size="sm"
                 onClick={() => setFilter("pending")}
               >
-                En attente
+                {t("pending")}
               </Button>
             </div>
           </div>
@@ -220,7 +222,7 @@ export default function TransfersPage() {
             <TableSkeleton rows={5} cols={8} />
           ) : filteredTransfers.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
-              <p className="text-lg">Aucun virement trouvé</p>
+              <p className="text-lg">{t("noTransferFound")}</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -228,13 +230,13 @@ export default function TransfersPage() {
                 <thead>
                   <tr>
                     <th>#</th>
-                    <th>Client</th>
-                    <th>Référence</th>
-                    <th>Date de création</th>
-                    <th>Total TTC</th>
-                    <th>Statut</th>
-                    <th>Date de paiement</th>
-                    <th>Actions</th>
+                    <th>{t("clients")}</th>
+                    <th>{t("reference")}</th>
+                    <th>{t("creationDate")}</th>
+                    <th>{t("totalTTC")}</th>
+                    <th>{t("status")}</th>
+                    <th>{t("paymentDate")}</th>
+                    <th>{t("actions")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -251,12 +253,12 @@ export default function TransfersPage() {
                         {transfer.paid && transfer.lastPaymentMethod === "Virement" ? (
                           <Badge variant="success" className="cursor-default">
                             <CheckCircle className="h-3 w-3 mr-1" />
-                            Confirmé
+                            {t("confirmed")}
                           </Badge>
                         ) : (
                           <Badge variant="warning">
                             <Clock className="h-3 w-3 mr-1" />
-                            En attente
+                            {t("pending")}
                           </Badge>
                         )}
                       </td>
@@ -270,13 +272,13 @@ export default function TransfersPage() {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                title="Confirmer le virement"
+                                title={t("confirmTransfer")}
                                 className="text-success hover:text-success hover:bg-success/10"
                                 onClick={async () => {
                                   if (
                                     await confirm({
-                                      title: "Confirmer le virement",
-                                      message: "Confirmer la réception de ce virement ?",
+                                      title: t("confirmTransfer"),
+                                      message: t("confirmTransferQuestion"),
                                       type: "info",
                                     })
                                   ) {
@@ -289,13 +291,13 @@ export default function TransfersPage() {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                title="Rejeter le virement"
+                                title={t("rejectTransfer")}
                                 className="text-destructive hover:text-destructive hover:bg-destructive/10"
                                 onClick={async () => {
                                   if (
                                     await confirm({
-                                      title: "Rejeter le virement",
-                                      message: "Êtes-vous sûr de vouloir rejeter ce virement ?",
+                                      title: t("rejectTransfer"),
+                                      message: t("rejectTransferConfirm"),
                                       type: "danger",
                                     })
                                   ) {
@@ -308,7 +310,7 @@ export default function TransfersPage() {
                             </>
                           )}
                           {transfer.paid && transfer.lastPaymentMethod === "Virement" && (
-                            <span className="text-sm text-muted-foreground">Traité</span>
+                            <span className="text-sm text-muted-foreground">{t("confirmed")}</span>
                           )}
                         </div>
                       </td>

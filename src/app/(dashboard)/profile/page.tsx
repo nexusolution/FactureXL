@@ -11,8 +11,10 @@ import { Badge } from "@/components/ui/badge";
 import { User, Mail, Phone, MapPin, Lock, Save, Eye, EyeOff } from "lucide-react";
 import { toast as customToast } from "@/lib/toast";
 import axios from "axios";
+import { useLanguage } from "@/lib/i18n";
 
 export default function ProfilePage() {
+  const { t } = useLanguage();
   const { data: session, update } = useSession();
   const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
@@ -136,15 +138,15 @@ export default function ProfilePage() {
   return (
     <div className="container mx-auto py-6">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-foreground">Mon Profil</h1>
-        <p className="text-muted-foreground mt-1">Gérez vos informations personnelles</p>
+        <h1 className="text-3xl font-bold text-foreground">{t("myProfile")}</h1>
+        <p className="text-muted-foreground mt-1">{t("managePersonalInfo")}</p>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Profile Summary Card */}
         <Card className="card-angular lg:col-span-1">
-          <CardHeader className="bg-gradient-to-r from-blue-50 to-cyan-50 border-b">
-            <CardTitle className="text-lg font-semibold text-primary">Informations</CardTitle>
+          <CardHeader className="border-b">
+            <CardTitle className="text-lg font-semibold text-primary">{t("information")}</CardTitle>
           </CardHeader>
           <CardContent className="p-6">
             <div className="flex flex-col items-center text-center space-y-4">
@@ -160,9 +162,9 @@ export default function ProfilePage() {
               </Badge>
               <div className="w-full pt-4 border-t space-y-2">
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Statut</span>
+                  <span className="text-muted-foreground">{t("status")}</span>
                   <Badge variant={user?.isActive ? "success" : "danger"}>
-                    {user?.isActive ? "Actif" : "Inactif"}
+                    {user?.isActive ? t("active") : t("inactive")}
                   </Badge>
                 </div>
                 {user?.code && (
@@ -178,10 +180,10 @@ export default function ProfilePage() {
 
         {/* Profile Edit Form */}
         <Card className="card-angular lg:col-span-2">
-          <CardHeader className="bg-gradient-to-r from-blue-50 to-cyan-50 border-b">
+          <CardHeader className="border-b">
             <div className="flex items-center justify-between">
               <CardTitle className="text-lg font-semibold text-primary">
-                Détails du profil
+                {t("profileDetails")}
               </CardTitle>
               {!isEditing && (
                 <Button
@@ -190,7 +192,7 @@ export default function ProfilePage() {
                   className="btn-angular"
                   onClick={() => setIsEditing(true)}
                 >
-                  Modifier
+                  {t("edit")}
                 </Button>
               )}
             </div>
@@ -199,7 +201,7 @@ export default function ProfilePage() {
             <form onSubmit={handleProfileUpdate} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Nom complet</Label>
+                  <Label htmlFor="name">{t("name")}</Label>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
@@ -213,7 +215,7 @@ export default function ProfilePage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email">{t("email")}</Label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
@@ -228,7 +230,7 @@ export default function ProfilePage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="phone">Téléphone</Label>
+                  <Label htmlFor="phone">{t("phone")}</Label>
                   <div className="relative">
                     <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
@@ -242,7 +244,7 @@ export default function ProfilePage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="city">Ville</Label>
+                  <Label htmlFor="city">{t("city")}</Label>
                   <div className="relative">
                     <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
@@ -256,7 +258,7 @@ export default function ProfilePage() {
                 </div>
 
                 <div className="space-y-2 md:col-span-2">
-                  <Label htmlFor="address">Adresse</Label>
+                  <Label htmlFor="address">{t("address")}</Label>
                   <Input
                     id="address"
                     value={formData.address}
@@ -267,7 +269,7 @@ export default function ProfilePage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="zipCode">Code postal</Label>
+                  <Label htmlFor="zipCode">{t("zipCode")}</Label>
                   <Input
                     id="zipCode"
                     value={formData.zipCode}
@@ -286,7 +288,7 @@ export default function ProfilePage() {
                     disabled={updateProfileMutation.isPending}
                   >
                     <Save className="h-4 w-4 mr-2" />
-                    Enregistrer
+                    {t("save")}
                   </Button>
                   <Button
                     type="button"
@@ -304,7 +306,7 @@ export default function ProfilePage() {
                       });
                     }}
                   >
-                    Annuler
+                    {t("cancel")}
                   </Button>
                 </div>
               )}
@@ -315,10 +317,10 @@ export default function ProfilePage() {
 
       {/* Change Password Section */}
       <Card className="card-angular mt-6">
-        <CardHeader className="bg-gradient-to-r from-blue-50 to-cyan-50 border-b">
+        <CardHeader className="border-b">
           <div className="flex items-center justify-between">
             <CardTitle className="text-lg font-semibold text-primary">
-              Sécurité
+              {t("security")}
             </CardTitle>
             {!showPasswordSection && (
               <Button
@@ -328,7 +330,7 @@ export default function ProfilePage() {
                 onClick={() => setShowPasswordSection(true)}
               >
                 <Lock className="h-4 w-4 mr-2" />
-                Changer le mot de passe
+                {t("changePassword")}
               </Button>
             )}
           </div>
@@ -337,7 +339,7 @@ export default function ProfilePage() {
           <CardContent className="p-6">
             <form onSubmit={handlePasswordUpdate} className="space-y-4 max-w-md">
               <div className="space-y-2">
-                <Label htmlFor="currentPassword">Mot de passe actuel</Label>
+                <Label htmlFor="currentPassword">{t("currentPassword")}</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -365,7 +367,7 @@ export default function ProfilePage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="newPassword">Nouveau mot de passe</Label>
+                <Label htmlFor="newPassword">{t("newPassword")}</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -391,11 +393,11 @@ export default function ProfilePage() {
                     )}
                   </button>
                 </div>
-                <p className="text-xs text-muted-foreground">Au moins 8 caractères</p>
+                <p className="text-xs text-muted-foreground">{t("passwordMinLength")}</p>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirmer le mot de passe</Label>
+                <Label htmlFor="confirmPassword">{t("confirmPassword")}</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -419,7 +421,7 @@ export default function ProfilePage() {
                   disabled={updatePasswordMutation.isPending}
                 >
                   <Save className="h-4 w-4 mr-2" />
-                  Mettre à jour
+                  {t("update")}
                 </Button>
                 <Button
                   type="button"
@@ -434,7 +436,7 @@ export default function ProfilePage() {
                     });
                   }}
                 >
-                  Annuler
+                  {t("cancel")}
                 </Button>
               </div>
             </form>

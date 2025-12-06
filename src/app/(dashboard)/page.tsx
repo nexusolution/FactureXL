@@ -19,15 +19,18 @@ import {
 import { DashboardSkeleton } from "@/components/ui/loading";
 import * as XLSX from "xlsx";
 import { toast as customToast } from "@/lib/toast";
+import { useLanguage } from "@/lib/i18n";
 
-const MONTHS = ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."];
-const MONTHS_FULL = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
+const MONTHS_EN = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const MONTHS_FR = ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."];
 
 // Colors for different groups - Using Angular colors
 const COLORS = ["#199ef7", "#38761d", "#f20c1f", "#32bbed", "#ea7005", "#8884d8", "#82ca9d", "#ffc658"];
 
 export default function DashboardPage() {
-  const currentMonth = new Date().toLocaleString("fr-FR", { month: "long" });
+  const { t, language } = useLanguage();
+  const MONTHS = language === "en" ? MONTHS_EN : MONTHS_FR;
+  const currentMonth = new Date().toLocaleString(language === "en" ? "en-US" : "fr-FR", { month: "long" });
   const currentYear = new Date().getFullYear();
   const [startDate, setStartDate] = useState(
     new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split("T")[0]
@@ -257,7 +260,7 @@ export default function DashboardPage() {
                 <FileText className="h-6 w-6 text-white" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground uppercase font-medium">Total de Factures</p>
+                <p className="text-sm text-muted-foreground uppercase font-medium">{t("totalInvoices")}</p>
                 <p className="text-2xl font-bold text-foreground">{totalRevenue.toFixed(2)} XPF</p>
               </div>
             </div>
@@ -271,7 +274,7 @@ export default function DashboardPage() {
                 <Users className="h-6 w-6 text-white" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground uppercase font-medium">Clients</p>
+                <p className="text-sm text-muted-foreground uppercase font-medium">{t("clients")}</p>
                 <p className="text-2xl font-bold text-foreground">{clients}</p>
               </div>
             </div>
@@ -285,7 +288,7 @@ export default function DashboardPage() {
                 <FileText className="h-6 w-6 text-white" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground uppercase font-medium">Factures</p>
+                <p className="text-sm text-muted-foreground uppercase font-medium">{t("invoices")}</p>
                 <p className="text-2xl font-bold text-foreground">{invoiceCount}</p>
               </div>
             </div>
@@ -298,7 +301,7 @@ export default function DashboardPage() {
         <Card className="card-angular">
           <CardHeader className="border-b">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-lg font-semibold text-primary">Factures ({currentMonthInvoices.length})</CardTitle>
+              <CardTitle className="text-lg font-semibold text-primary">{t("invoices")} ({currentMonthInvoices.length})</CardTitle>
               <span className="px-3 py-1 bg-primary text-white text-sm rounded-md capitalize font-medium">
                 {currentMonth}
               </span>
@@ -310,17 +313,17 @@ export default function DashboardPage() {
                 <thead>
                   <tr>
                     <th className="text-left py-2 px-2">#</th>
-                    <th className="text-left py-2 px-2">Client</th>
-                    <th className="text-left py-2 px-2">Ref</th>
-                    <th className="text-left py-2 px-2">Date de création</th>
-                    <th className="text-right py-2 px-2">Total</th>
+                    <th className="text-left py-2 px-2">{language === "en" ? "Client" : "Client"}</th>
+                    <th className="text-left py-2 px-2">{t("reference")}</th>
+                    <th className="text-left py-2 px-2">{t("creationDate")}</th>
+                    <th className="text-right py-2 px-2">{t("total")}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {currentMonthInvoices.length === 0 ? (
                     <tr>
                       <td colSpan={5} className="text-center py-8 text-muted-foreground">
-                        Aucune facture ce mois
+                        {t("noInvoiceThisMonth")}
                       </td>
                     </tr>
                   ) : (
@@ -339,7 +342,7 @@ export default function DashboardPage() {
             </div>
             {currentMonthInvoices.length > 0 && (
               <div className="flex items-center justify-center gap-2 mt-4 text-sm text-muted-foreground">
-                <span>Affichage de {Math.min(10, currentMonthInvoices.length)} sur {currentMonthInvoices.length}</span>
+                <span>{t("displayingXofY", { x: Math.min(10, currentMonthInvoices.length), y: currentMonthInvoices.length })}</span>
               </div>
             )}
           </CardContent>
@@ -348,12 +351,12 @@ export default function DashboardPage() {
         {/* Ecritures comptables */}
         <Card className="card-angular">
           <CardHeader className="border-b">
-            <CardTitle className="text-lg font-semibold text-primary">Écritures comptables</CardTitle>
+            <CardTitle className="text-lg font-semibold text-primary">{t("accountingEntries")}</CardTitle>
           </CardHeader>
           <CardContent className="p-6 space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-sm text-muted-foreground font-medium">Date de début :</label>
+                <label className="text-sm text-muted-foreground font-medium">{t("startDate")}</label>
                 <input
                   type="date"
                   value={startDate}
@@ -362,7 +365,7 @@ export default function DashboardPage() {
                 />
               </div>
               <div>
-                <label className="text-sm text-muted-foreground font-medium">Date de fin :</label>
+                <label className="text-sm text-muted-foreground font-medium">{t("endDate")}</label>
                 <input
                   type="date"
                   value={endDate}
@@ -376,7 +379,7 @@ export default function DashboardPage() {
               onClick={handleExportExcel}
             >
               <Download className="mr-2 h-4 w-4" />
-              Exporter mes écritures comptables
+              {t("exportAccountingEntries")}
             </Button>
           </CardContent>
         </Card>
@@ -387,14 +390,14 @@ export default function DashboardPage() {
         {/* Groupe Statistiques */}
         <Card className="card-angular">
           <CardHeader className="border-b">
-            <CardTitle className="text-lg font-semibold text-primary">Groupe Statistiques</CardTitle>
+            <CardTitle className="text-lg font-semibold text-primary">{t("groupStats")}</CardTitle>
           </CardHeader>
           <CardContent className="p-6">
             <div className="overflow-x-auto">
               <table className="w-full text-xs">
                 <thead>
                   <tr className="bg-muted/50">
-                    <th className="py-2 px-2 text-left font-semibold text-muted-foreground">Groupe</th>
+                    <th className="py-2 px-2 text-left font-semibold text-muted-foreground">{language === "en" ? "Group" : "Groupe"}</th>
                     {MONTHS.map((month) => (
                       <th key={month} className="py-2 px-1 text-center font-semibold text-muted-foreground">{month}</th>
                     ))}
@@ -404,7 +407,7 @@ export default function DashboardPage() {
                   {groups.length === 0 ? (
                     <tr>
                       <td colSpan={13} className="text-center py-8 text-muted-foreground">
-                        Aucun groupe
+                        {t("noGroup")}
                       </td>
                     </tr>
                   ) : (
@@ -428,14 +431,14 @@ export default function DashboardPage() {
         {/* Employe Statistiques */}
         <Card className="card-angular">
           <CardHeader className="border-b">
-            <CardTitle className="text-lg font-semibold text-primary">Employé Statistiques</CardTitle>
+            <CardTitle className="text-lg font-semibold text-primary">{t("employeeStats")}</CardTitle>
           </CardHeader>
           <CardContent className="p-6">
             <div className="overflow-x-auto">
               <table className="w-full text-xs">
                 <thead>
                   <tr className="bg-muted/50">
-                    <th className="py-2 px-2 text-left font-semibold text-muted-foreground">Employé</th>
+                    <th className="py-2 px-2 text-left font-semibold text-muted-foreground">{language === "en" ? "Employee" : "Employé"}</th>
                     {MONTHS.map((month) => (
                       <th key={month} className="py-2 px-1 text-center font-semibold text-muted-foreground">{month}</th>
                     ))}
@@ -445,7 +448,7 @@ export default function DashboardPage() {
                   {Object.keys(employeeMonthlyData).length === 0 ? (
                     <tr>
                       <td colSpan={13} className="text-center py-8 text-muted-foreground">
-                        Aucun employé
+                        {t("noEmployee")}
                       </td>
                     </tr>
                   ) : (
@@ -471,8 +474,8 @@ export default function DashboardPage() {
       <Card className="card-angular">
         <CardHeader className="border-b">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-lg font-semibold text-primary">Groupe/mois</CardTitle>
-            <div className="text-sm text-muted-foreground font-medium">Graphique par groupes</div>
+            <CardTitle className="text-lg font-semibold text-primary">{t("groupPerMonth")}</CardTitle>
+            <div className="text-sm text-muted-foreground font-medium">{t("graphByGroups")}</div>
           </div>
         </CardHeader>
         <CardContent className="p-6">

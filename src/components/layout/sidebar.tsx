@@ -14,82 +14,90 @@ import {
   CalendarClock,
   Percent,
   Info,
-  LogOut,
   Building,
   Banknote,
   Shield,
 } from "lucide-react";
-import { signOut, useSession } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import { Role } from "@prisma/client";
 import { useMemo } from "react";
+import { useLanguage, TranslationKey } from "@/lib/i18n";
+import { LucideIcon } from "lucide-react";
+
+type NavItem = {
+  key: TranslationKey;
+  href: string;
+  icon: LucideIcon;
+};
 
 // Navigation items matching Angular role-based structure
-const getNavigationByRole = (role: Role | undefined) => {
+const getNavigationByRole = (role: Role | undefined): NavItem[] => {
   if (!role) return [];
 
   // SUPER_ADMIN Role - only companies and dashboard
   if (role === "SUPER_ADMIN") {
     return [
-      { name: "Dashboard", href: "/", icon: LayoutDashboard },
-      { name: "Companies", href: "/companies", icon: Building },
+      { key: "dashboard", href: "/", icon: LayoutDashboard },
+      { key: "companies", href: "/companies", icon: Building },
     ];
   }
 
   // OWNER Role - full access
   if (role === "OWNER") {
     return [
-      { name: "Dashboard", href: "/", icon: LayoutDashboard },
-      { name: "Clients", href: "/clients", icon: Users },
-      { name: "Employés", href: "/employees", icon: UserCog },
-      { name: "Utilisateurs", href: "/users", icon: Shield },
-      { name: "Groupes", href: "/groups", icon: FolderOpen },
-      { name: "Factures", href: "/invoices", icon: FileText },
-      { name: "Avoirs", href: "/avoirs", icon: FileX },
-      { name: "Devis", href: "/devis", icon: FileCheck },
-      { name: "Virements", href: "/transfers", icon: Banknote },
-      { name: "Factures abonnements", href: "/subscription-invoices", icon: CalendarClock },
-      { name: "Taxes", href: "/taxes", icon: Percent },
-      { name: "Informations", href: "/company", icon: Info },
+      { key: "dashboard", href: "/", icon: LayoutDashboard },
+      { key: "clients", href: "/clients", icon: Users },
+      { key: "employees", href: "/employees", icon: UserCog },
+      { key: "users", href: "/users", icon: Shield },
+      { key: "groups", href: "/groups", icon: FolderOpen },
+      { key: "invoices", href: "/invoices", icon: FileText },
+      { key: "credits", href: "/avoirs", icon: FileX },
+      { key: "quotes", href: "/devis", icon: FileCheck },
+      { key: "transfers", href: "/transfers", icon: Banknote },
+      { key: "subscriptionInvoices", href: "/subscription-invoices", icon: CalendarClock },
+      { key: "taxes", href: "/taxes", icon: Percent },
+      { key: "information", href: "/company", icon: Info },
     ];
   }
 
   // CLIENT Role - limited access
   if (role === "CLIENT") {
     return [
-      { name: "Dashboard", href: "/", icon: LayoutDashboard },
-      { name: "Factures", href: "/invoices", icon: FileText },
-      { name: "Informations", href: "/profile", icon: Info },
+      { key: "dashboard", href: "/", icon: LayoutDashboard },
+      { key: "invoices", href: "/invoices", icon: FileText },
+      { key: "information", href: "/profile", icon: Info },
     ];
   }
 
   // ADMIN Role - extended access with transfers
   if (role === "ADMIN") {
     return [
-      { name: "Dashboard", href: "/", icon: LayoutDashboard },
-      { name: "Clients", href: "/clients", icon: Users },
-      { name: "Employés", href: "/employees", icon: UserCog },
-      { name: "Groupes", href: "/groups", icon: FolderOpen },
-      { name: "Factures", href: "/invoices", icon: FileText },
-      { name: "Avoirs", href: "/avoirs", icon: FileX },
-      { name: "Devis", href: "/devis", icon: FileCheck },
-      { name: "Virements", href: "/transfers", icon: Banknote },
-      { name: "Taxes", href: "/taxes", icon: Percent },
-      { name: "Informations", href: "/profile", icon: Info },
+      { key: "dashboard", href: "/", icon: LayoutDashboard },
+      { key: "clients", href: "/clients", icon: Users },
+      { key: "employees", href: "/employees", icon: UserCog },
+      { key: "groups", href: "/groups", icon: FolderOpen },
+      { key: "invoices", href: "/invoices", icon: FileText },
+      { key: "credits", href: "/avoirs", icon: FileX },
+      { key: "quotes", href: "/devis", icon: FileCheck },
+      { key: "transfers", href: "/transfers", icon: Banknote },
+      { key: "taxes", href: "/taxes", icon: Percent },
+      { key: "information", href: "/profile", icon: Info },
     ];
   }
 
   // MANAGER, EMPLOYEE - invoices, credits, and info
   return [
-    { name: "Factures", href: "/invoices", icon: FileText },
-    { name: "Avoirs", href: "/avoirs", icon: FileX },
-    { name: "Devis", href: "/devis", icon: FileCheck },
-    { name: "Informations", href: "/profile", icon: Info },
+    { key: "invoices", href: "/invoices", icon: FileText },
+    { key: "credits", href: "/avoirs", icon: FileX },
+    { key: "quotes", href: "/devis", icon: FileCheck },
+    { key: "information", href: "/profile", icon: Info },
   ];
 };
 
 export function Sidebar() {
   const pathname = usePathname();
   const { data: session } = useSession();
+  const { t } = useLanguage();
 
   // Get navigation items based on user role
   const navigation = useMemo(() => {
@@ -124,7 +132,7 @@ export function Sidebar() {
           const isActive = pathname === item.href;
           return (
             <Link
-              key={item.name}
+              key={item.key}
               href={item.href}
               className={cn(
                 "group flex items-center px-6 py-3 text-sm font-medium rounded-lg transition-all duration-150",
@@ -139,38 +147,12 @@ export function Sidebar() {
                   isActive ? "text-primary" : "text-muted-foreground group-hover:text-primary"
                 )}
               />
-              {item.name}
+              {t(item.key)}
             </Link>
           );
         })}
       </nav>
 
-      {/* User section - matching Angular style */}
-      <div className="border-t border-gray-200 p-4 bg-[#f3f6f9]">
-        <div className="flex items-center">
-          <div className="flex-shrink-0">
-            <div className="h-10 w-10 rounded-full bg-primary flex items-center justify-center">
-              <span className="text-white text-sm font-medium">
-                {session?.user?.name?.[0]?.toUpperCase() || "U"}
-              </span>
-            </div>
-          </div>
-          <div className="ml-3 flex-1 min-w-0">
-            <p className="text-sm font-medium text-gray-900 truncate">
-              {session?.user?.name || "Utilisateur"}
-            </p>
-            <p className="text-xs text-gray-500 truncate">{session?.user?.email}</p>
-            <p className="text-xs text-primary font-medium">{session?.user?.role}</p>
-          </div>
-          <button
-            onClick={() => signOut({ callbackUrl: "/login" })}
-            className="ml-2 p-2 text-gray-400 hover:text-primary transition-colors"
-            title="Déconnexion"
-          >
-            <LogOut className="h-5 w-5" />
-          </button>
-        </div>
-      </div>
     </div>
   );
 }

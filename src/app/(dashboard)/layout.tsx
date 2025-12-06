@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
+import { LanguageProvider } from "@/lib/i18n";
 
 export default async function DashboardLayout({
   children,
@@ -14,5 +15,9 @@ export default async function DashboardLayout({
     redirect("/login");
   }
 
-  return <DashboardShell>{children}</DashboardShell>;
+  return (
+    <LanguageProvider>
+      <DashboardShell>{children}</DashboardShell>
+    </LanguageProvider>
+  );
 }

@@ -16,8 +16,10 @@ import Link from "next/link";
 import { TableSkeleton } from "@/components/ui/loading";
 import { useConfirm } from "@/components/ui/confirm-dialog";
 import axios from "axios";
+import { useLanguage } from "@/lib/i18n";
 
 export default function InvoicesPage() {
+  const { t } = useLanguage();
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<"all" | "paid" | "pending">("all");
   const [selectedInvoices, setSelectedInvoices] = useState<string[]>([]);
@@ -193,13 +195,12 @@ export default function InvoicesPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Factures</h1>
-          <p className="text-muted-foreground mt-1">Gérez vos factures</p>
+          <h1 className="text-3xl font-bold text-foreground">{t("invoices")}</h1>
         </div>
         {isOwnerOrAdmin && (
           <Link href="/invoices/new">
             <Button className="btn-angular bg-primary text-white hover:bg-primary/90">
-              <Plus className="mr-2 h-4 w-4" /> Nouvelle facture
+              <Plus className="mr-2 h-4 w-4" /> {t("newInvoice")}
             </Button>
           </Link>
         )}
@@ -248,12 +249,12 @@ export default function InvoicesPage() {
 
       {/* Main Card */}
       <Card className="card-angular">
-        <CardHeader className="bg-gradient-to-r from-blue-50 to-cyan-50 border-b">
+        <CardHeader className="border-b">
           <div className="flex flex-col sm:flex-row gap-4 justify-between">
             <div className="relative flex-1 max-w-sm">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Rechercher par référence ou client..."
+                placeholder={t("searchByRefOrClient")}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="form-field-angular pl-9"
@@ -266,7 +267,7 @@ export default function InvoicesPage() {
                 size="sm"
                 onClick={() => setFilter("all")}
               >
-                Toutes
+                {t("all")}
               </Button>
               <Button
                 variant={filter === "paid" ? "default" : "outline"}
@@ -274,7 +275,7 @@ export default function InvoicesPage() {
                 size="sm"
                 onClick={() => setFilter("paid")}
               >
-                Payées
+                {t("paid")}
               </Button>
               <Button
                 variant={filter === "pending" ? "default" : "outline"}
@@ -282,7 +283,7 @@ export default function InvoicesPage() {
                 size="sm"
                 onClick={() => setFilter("pending")}
               >
-                En attente
+                {t("pending")}
               </Button>
             </div>
           </div>
@@ -292,23 +293,23 @@ export default function InvoicesPage() {
             <TableSkeleton rows={5} cols={isClient ? 7 : 8} />
           ) : filteredInvoices.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
-              <p className="text-lg">Aucune facture trouvée</p>
+              <p className="text-lg">{t("noInvoiceFound")}</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="table-angular">
                 <thead>
                   <tr>
-                    {isClient && <th>Paiement</th>}
+                    {isClient && <th>{t("paymentMethod")}</th>}
                     <th>#</th>
-                    <th>Client</th>
-                    <th>Référence</th>
-                    <th>Date de création</th>
-                    <th>Total HT</th>
-                    <th>Total TTC</th>
-                    <th>Statut</th>
-                    <th>Date de paiement</th>
-                    <th>Actions</th>
+                    <th>{t("clients")}</th>
+                    <th>{t("reference")}</th>
+                    <th>{t("creationDate")}</th>
+                    <th>{t("totalHT")}</th>
+                    <th>{t("totalTTC")}</th>
+                    <th>{t("status")}</th>
+                    <th>{t("paymentDate")}</th>
+                    <th>{t("actions")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -338,7 +339,7 @@ export default function InvoicesPage() {
                         {invoice.paid ? (
                           <Badge variant="success" className="cursor-default">
                             <CheckCircle className="h-3 w-3 mr-1" />
-                            Payée
+                            {t("paid")}
                           </Badge>
                         ) : (
                           <Badge
@@ -349,7 +350,7 @@ export default function InvoicesPage() {
                               markPaidMutation.mutate({ id: invoice.id, method: "Manuel" })
                             }
                           >
-                            En attente
+                            {t("pending")}
                           </Badge>
                         )}
                       </td>
@@ -363,7 +364,7 @@ export default function InvoicesPage() {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                title="Modifier"
+                                title={t("edit")}
                                 asChild
                               >
                                 <Link href={`/invoices/${invoice.id}`}>
@@ -373,7 +374,7 @@ export default function InvoicesPage() {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                title="Télécharger PDF"
+                                title={t("downloadPDF")}
                                 onClick={() => handleDownloadPDF(invoice.id)}
                               >
                                 <Download className="h-4 w-4" />
@@ -381,13 +382,13 @@ export default function InvoicesPage() {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                title="Supprimer"
+                                title={t("delete")}
                                 className="text-destructive hover:text-destructive hover:bg-destructive/10"
                                 onClick={async () => {
                                   if (
                                     await confirm({
-                                      title: "Supprimer la facture",
-                                      message: "Êtes-vous sûr de vouloir supprimer cette facture ?",
+                                      title: t("delete"),
+                                      message: t("deleteClientConfirm"),
                                       type: "danger",
                                     })
                                   ) {
@@ -403,7 +404,7 @@ export default function InvoicesPage() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              title="Télécharger PDF"
+                              title={t("downloadPDF")}
                               onClick={() => handleDownloadPDF(invoice.id)}
                             >
                               <Download className="h-4 w-4" />
