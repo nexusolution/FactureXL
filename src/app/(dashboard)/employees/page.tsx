@@ -9,8 +9,10 @@ import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
-import { Plus, Search, Trash2, Edit, Users } from "lucide-react";
+import { Plus, Search, Trash2, Edit } from "lucide-react";
 import { toast } from "sonner";
 import { TableSkeleton, ButtonSpinner } from "@/components/ui/loading";
 import { useConfirm } from "@/components/ui/confirm-dialog";
@@ -128,53 +130,41 @@ export default function EmployeesPage() {
       {/* Form Modal */}
       <Dialog open={showForm} onOpenChange={(open) => !open && handleCloseModal()}>
         <DialogContent className="max-w-lg">
-          {/* Styled Header */}
-          <div className="bg-gradient-to-r from-blue-50 to-cyan-50 -mx-0 -mt-0 px-6 py-4 border-b">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-cyan-100 rounded-lg">
-                <Users className="h-5 w-5 text-cyan-600" />
-              </div>
-              <h2 className="text-lg font-semibold text-gray-800">
-                {editingUser ? "Modifier l'employe" : "Ajouter nouveau employe"}
-              </h2>
-            </div>
-          </div>
+          <DialogHeader>
+            <DialogTitle>
+              {editingUser ? "Modifier l'employe" : "Nouvel employe"}
+            </DialogTitle>
+          </DialogHeader>
 
-          <form onSubmit={handleSubmit} className="p-6 space-y-5">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Nom */}
-              <div className="space-y-1.5">
-                <Label htmlFor="name" className="text-gray-600 text-sm">Nom :</Label>
+              <div className="space-y-2">
+                <Label htmlFor="name">Nom *</Label>
                 <Input
                   id="name"
                   name="name"
                   defaultValue={editingUser?.name}
                   required
-                  className="bg-blue-50/50 border-gray-200 focus:border-cyan-400 focus:ring-cyan-400"
                 />
               </div>
 
               {/* E-mail */}
-              <div className="space-y-1.5">
-                <Label htmlFor="email" className="text-gray-600 text-sm">
-                  E-mail :<span className="text-red-500">*</span>
-                </Label>
+              <div className="space-y-2">
+                <Label htmlFor="email">E-mail *</Label>
                 <Input
                   id="email"
                   name="email"
                   type="email"
                   defaultValue={editingUser?.email}
                   required
-                  className="bg-blue-50/50 border-gray-200 focus:border-cyan-400 focus:ring-cyan-400"
                 />
               </div>
             </div>
 
-            {/* Pourcentage chiffre d'affaire - Full width */}
-            <div className="space-y-1.5">
-              <Label htmlFor="commissionRate" className="text-gray-600 text-sm">
-                Pourcentage chiffre d&apos;affaire :
-              </Label>
+            {/* Pourcentage chiffre d'affaire */}
+            <div className="space-y-2">
+              <Label htmlFor="commissionRate">Pourcentage chiffre d&apos;affaire</Label>
               <div className="relative">
                 <Input
                   id="commissionRate"
@@ -184,18 +174,21 @@ export default function EmployeesPage() {
                   max="100"
                   step="0.01"
                   defaultValue={editingUser?.commissionRate || "0"}
-                  className="bg-blue-50/50 border-gray-200 focus:border-cyan-400 focus:ring-cyan-400 pr-8"
+                  className="pr-8"
                 />
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">%</span>
               </div>
             </div>
 
-            {/* Submit Button */}
-            <div className="flex justify-center pt-4">
+            {/* Buttons */}
+            <div className="flex gap-2 justify-end pt-4">
+              <Button type="button" variant="outline" onClick={handleCloseModal}>
+                Annuler
+              </Button>
               <Button
                 type="submit"
                 disabled={createMutation.isPending || updateMutation.isPending}
-                className="bg-cyan-500 hover:bg-cyan-600 text-white px-8 py-2 rounded-md shadow-md hover:shadow-lg transition-all disabled:opacity-70"
+                className="bg-primary hover:bg-primary/90"
               >
                 {(createMutation.isPending || updateMutation.isPending) ? (
                   <>
@@ -203,10 +196,7 @@ export default function EmployeesPage() {
                     <span className="ml-2">Enregistrement...</span>
                   </>
                 ) : (
-                  <>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Enregistrer
-                  </>
+                  editingUser ? "Mettre a jour" : "Creer"
                 )}
               </Button>
             </div>

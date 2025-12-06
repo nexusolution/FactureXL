@@ -9,10 +9,12 @@ import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
-import { Plus, Search, Trash2, Edit, Users } from "lucide-react";
+import { Plus, Search, Trash2, Edit } from "lucide-react";
 import { toast } from "sonner";
-import { PageLoading, TableSkeleton, ButtonSpinner } from "@/components/ui/loading";
+import { TableSkeleton, ButtonSpinner } from "@/components/ui/loading";
 import { useConfirm } from "@/components/ui/confirm-dialog";
 
 export default function ClientsPage() {
@@ -148,50 +150,40 @@ export default function ClientsPage() {
       {/* Form Modal */}
       <Dialog open={showForm} onOpenChange={(open) => !open && handleCloseModal()}>
         <DialogContent className="max-w-2xl">
-          {/* Styled Header */}
-          <div className="bg-gradient-to-r from-blue-50 to-cyan-50 -mx-0 -mt-0 px-6 py-4 border-b">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-cyan-100 rounded-lg">
-                <Users className="h-5 w-5 text-cyan-600" />
-              </div>
-              <h2 className="text-lg font-semibold text-gray-800">
-                {editingUser ? "Modifier le client" : "Ajouter nouveau client"}
-              </h2>
-            </div>
-          </div>
+          <DialogHeader>
+            <DialogTitle>
+              {editingUser ? "Modifier le client" : "Nouveau client"}
+            </DialogTitle>
+          </DialogHeader>
 
-          <form onSubmit={handleSubmit} className="p-6 space-y-5">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Nom de client */}
-              <div className="space-y-1.5">
-                <Label htmlFor="name" className="text-gray-600 text-sm">Nom de client</Label>
+              <div className="space-y-2">
+                <Label htmlFor="name">Nom de client</Label>
                 <Input
                   id="name"
                   name="name"
                   defaultValue={editingUser?.name}
                   required
-                  className="bg-blue-50/50 border-gray-200 focus:border-cyan-400 focus:ring-cyan-400"
                 />
               </div>
 
               {/* E-mail */}
-              <div className="space-y-1.5">
-                <Label htmlFor="email" className="text-gray-600 text-sm">
-                  E-mail <span className="text-red-500">*</span>
-                </Label>
+              <div className="space-y-2">
+                <Label htmlFor="email">E-mail *</Label>
                 <Input
                   id="email"
                   name="email"
                   type="email"
                   defaultValue={editingUser?.email}
                   required
-                  className="bg-blue-50/50 border-gray-200 focus:border-cyan-400 focus:ring-cyan-400"
                 />
               </div>
 
               {/* Toggle Actif */}
-              <div className="space-y-1.5">
-                <Label className="text-gray-600 text-sm">Statut</Label>
+              <div className="space-y-2">
+                <Label>Statut</Label>
                 <div className="flex items-center gap-3 pt-1">
                   <span className={`text-sm ${!isActive ? 'text-gray-700 font-medium' : 'text-gray-400'}`}>Non Actif</span>
                   <button
@@ -212,16 +204,14 @@ export default function ClientsPage() {
               </div>
 
               {/* Mode de paiement */}
-              <div className="space-y-1.5">
-                <Label htmlFor="paymentMethod" className="text-gray-600 text-sm">
-                  Mode de paiement <span className="text-red-500">*</span>
-                </Label>
+              <div className="space-y-2">
+                <Label htmlFor="paymentMethod">Mode de paiement *</Label>
                 <select
                   id="paymentMethod"
                   name="paymentMethod"
                   defaultValue={editingUser?.paymentMethod || "card"}
                   required
-                  className="w-full h-10 px-3 py-2 bg-blue-50/50 border border-gray-200 rounded-md text-sm focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 focus:outline-none"
+                  className="flex h-11 w-full rounded-lg border-2 border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 transition-all duration-200 hover:border-gray-300 focus:border-primary focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20"
                 >
                   <option value="card">Carte Bancaire</option>
                   <option value="transfer">Virement</option>
@@ -231,19 +221,18 @@ export default function ClientsPage() {
               </div>
 
               {/* Telephone */}
-              <div className="space-y-1.5">
-                <Label htmlFor="phone" className="text-gray-600 text-sm">Telephone :</Label>
+              <div className="space-y-2">
+                <Label htmlFor="phone">Telephone</Label>
                 <Input
                   id="phone"
                   name="phone"
                   defaultValue={editingUser?.phone}
-                  className="bg-blue-50/50 border-gray-200 focus:border-cyan-400 focus:ring-cyan-400"
                 />
               </div>
 
               {/* Remise */}
-              <div className="space-y-1.5">
-                <Label htmlFor="discount" className="text-gray-600 text-sm">Remise</Label>
+              <div className="space-y-2">
+                <Label htmlFor="discount">Remise</Label>
                 <Input
                   id="discount"
                   name="discount"
@@ -251,29 +240,26 @@ export default function ClientsPage() {
                   min="0"
                   step="0.01"
                   defaultValue={editingUser?.discount || "0"}
-                  className="bg-blue-50/50 border-gray-200 focus:border-cyan-400 focus:ring-cyan-400"
                 />
               </div>
 
               {/* Ville */}
-              <div className="space-y-1.5">
-                <Label htmlFor="city" className="text-gray-600 text-sm">Ville</Label>
+              <div className="space-y-2">
+                <Label htmlFor="city">Ville</Label>
                 <Input
                   id="city"
                   name="city"
                   defaultValue={editingUser?.city}
-                  className="bg-blue-50/50 border-gray-200 focus:border-cyan-400 focus:ring-cyan-400"
                 />
               </div>
 
               {/* Code Postal */}
-              <div className="space-y-1.5">
-                <Label htmlFor="zipCode" className="text-gray-600 text-sm">Code Postal</Label>
+              <div className="space-y-2">
+                <Label htmlFor="zipCode">Code Postal</Label>
                 <Input
                   id="zipCode"
                   name="zipCode"
                   defaultValue={editingUser?.zipCode}
-                  className="bg-blue-50/50 border-gray-200 focus:border-cyan-400 focus:ring-cyan-400"
                 />
               </div>
 
@@ -282,23 +268,26 @@ export default function ClientsPage() {
             </div>
 
             {/* Adresse - Full width */}
-            <div className="space-y-1.5">
-              <Label htmlFor="address" className="text-gray-600 text-sm">Adresse</Label>
+            <div className="space-y-2">
+              <Label htmlFor="address">Adresse</Label>
               <textarea
                 id="address"
                 name="address"
                 rows={3}
                 defaultValue={editingUser?.address}
-                className="w-full px-3 py-2 bg-blue-50/50 border border-gray-200 rounded-md text-sm focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 focus:outline-none resize-none"
+                className="flex min-h-[80px] w-full rounded-lg border-2 border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 transition-all duration-200 placeholder:text-gray-400 hover:border-gray-300 focus:border-primary focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none"
               />
             </div>
 
-            {/* Submit Button */}
-            <div className="flex justify-center pt-4">
+            {/* Submit Buttons */}
+            <div className="flex gap-2 justify-end pt-4">
+              <Button type="button" variant="outline" onClick={handleCloseModal}>
+                Annuler
+              </Button>
               <Button
                 type="submit"
                 disabled={createMutation.isPending || updateMutation.isPending}
-                className="bg-cyan-500 hover:bg-cyan-600 text-white px-8 py-2 rounded-md shadow-md hover:shadow-lg transition-all disabled:opacity-70"
+                className="bg-primary hover:bg-primary/90"
               >
                 {(createMutation.isPending || updateMutation.isPending) ? (
                   <>
@@ -306,10 +295,7 @@ export default function ClientsPage() {
                     <span className="ml-2">Enregistrement...</span>
                   </>
                 ) : (
-                  <>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Enregistrer
-                  </>
+                  editingUser ? "Mettre a jour" : "Creer"
                 )}
               </Button>
             </div>
