@@ -296,7 +296,7 @@ export default function DashboardPage() {
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Factures Table */}
         <Card className="card-angular">
-          <CardHeader className="bg-gradient-to-r from-blue-50 to-cyan-50 border-b">
+          <CardHeader className="border-b">
             <div className="flex items-center justify-between">
               <CardTitle className="text-lg font-semibold text-primary">Factures ({currentMonthInvoices.length})</CardTitle>
               <span className="px-3 py-1 bg-primary text-white text-sm rounded-md capitalize font-medium">
@@ -347,7 +347,7 @@ export default function DashboardPage() {
 
         {/* Ecritures comptables */}
         <Card className="card-angular">
-          <CardHeader className="bg-gradient-to-r from-blue-50 to-cyan-50 border-b">
+          <CardHeader className="border-b">
             <CardTitle className="text-lg font-semibold text-primary">Écritures comptables</CardTitle>
           </CardHeader>
           <CardContent className="p-6 space-y-4">
@@ -386,7 +386,7 @@ export default function DashboardPage() {
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Groupe Statistiques */}
         <Card className="card-angular">
-          <CardHeader className="bg-gradient-to-r from-blue-50 to-cyan-50 border-b">
+          <CardHeader className="border-b">
             <CardTitle className="text-lg font-semibold text-primary">Groupe Statistiques</CardTitle>
           </CardHeader>
           <CardContent className="p-6">
@@ -427,7 +427,7 @@ export default function DashboardPage() {
 
         {/* Employe Statistiques */}
         <Card className="card-angular">
-          <CardHeader className="bg-gradient-to-r from-blue-50 to-cyan-50 border-b">
+          <CardHeader className="border-b">
             <CardTitle className="text-lg font-semibold text-primary">Employé Statistiques</CardTitle>
           </CardHeader>
           <CardContent className="p-6">
@@ -469,7 +469,7 @@ export default function DashboardPage() {
 
       {/* Groupe/mois Chart - Stacked Bar Chart */}
       <Card className="card-angular">
-        <CardHeader className="bg-gradient-to-r from-blue-50 to-cyan-50 border-b">
+        <CardHeader className="border-b">
           <div className="flex items-center justify-between">
             <CardTitle className="text-lg font-semibold text-primary">Groupe/mois</CardTitle>
             <div className="text-sm text-muted-foreground font-medium">Graphique par groupes</div>
