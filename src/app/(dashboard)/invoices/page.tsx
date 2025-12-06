@@ -17,6 +17,10 @@ import { TableSkeleton } from "@/components/ui/loading";
 import { useConfirm } from "@/components/ui/confirm-dialog";
 import axios from "axios";
 import { useLanguage } from "@/lib/i18n";
+import { Pagination } from "@/components/ui/pagination";
+import { InvoiceModal } from "@/components/invoices/invoice-modal";
+
+const ITEMS_PER_PAGE_DEFAULT = 20;
 
 export default function InvoicesPage() {
   const { t } = useLanguage();
@@ -25,6 +29,9 @@ export default function InvoicesPage() {
   const [selectedInvoices, setSelectedInvoices] = useState<string[]>([]);
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<"card" | "transfer" | "debit">("card");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(ITEMS_PER_PAGE_DEFAULT);
+  const [showNewInvoiceModal, setShowNewInvoiceModal] = useState(false);
   const queryClient = useQueryClient();
   const confirm = useConfirm();
   const { data: session } = useSession();
@@ -123,6 +130,21 @@ export default function InvoicesPage() {
     return matchesSearch && matchesFilter;
   });
 
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredInvoices.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedInvoices = filteredInvoices.slice(startIndex, startIndex + itemsPerPage);
+
+  // Reset to page 1 when filter or search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, filter]);
+
+  const handleItemsPerPageChange = (newItemsPerPage: number) => {
+    setItemsPerPage(newItemsPerPage);
+    setCurrentPage(1);
+  };
+
   const handleInvoiceSelection = (id: string) => {
     setSelectedInvoices((prev) =>
       prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
@@ -198,11 +220,12 @@ export default function InvoicesPage() {
           <h1 className="text-3xl font-bold text-foreground">{t("invoices")}</h1>
         </div>
         {isOwnerOrAdmin && (
-          <Link href="/invoices/new">
-            <Button className="btn-angular bg-primary text-white hover:bg-primary/90">
-              <Plus className="mr-2 h-4 w-4" /> {t("newInvoice")}
-            </Button>
-          </Link>
+          <Button
+            className="btn-angular bg-primary text-white hover:bg-primary/90"
+            onClick={() => setShowNewInvoiceModal(true)}
+          >
+            <Plus className="mr-2 h-4 w-4" /> {t("newInvoice")}
+          </Button>
         )}
       </div>
 
@@ -313,7 +336,7 @@ export default function InvoicesPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredInvoices.map((invoice: any, index: number) => (
+                  {paginatedInvoices.map((invoice: any, index: number) => (
                     <tr key={invoice.id} className="hover:bg-muted/20 transition-colors">
                       {isClient && (
                         <td>
@@ -327,7 +350,7 @@ export default function InvoicesPage() {
                           )}
                         </td>
                       )}
-                      <td className="font-medium">{index + 1}</td>
+                      <td className="font-medium">{startIndex + index + 1}</td>
                       <td>{invoice.client?.name || "-"}</td>
                       <td className="font-semibold text-primary">{invoice.ref}</td>
                       <td>{formatDate(invoice.createdAt)}</td>
@@ -418,8 +441,28 @@ export default function InvoicesPage() {
               </table>
             </div>
           )}
+
+          {/* Pagination */}
+          {filteredInvoices.length > ITEMS_PER_PAGE_DEFAULT && (
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={filteredInvoices.length}
+              itemsPerPage={itemsPerPage}
+              onPageChange={setCurrentPage}
+              onItemsPerPageChange={handleItemsPerPageChange}
+            />
+          )}
         </CardContent>
       </Card>
+
+      {/* New Invoice Modal */}
+      <InvoiceModal
+        open={showNewInvoiceModal}
+        onOpenChange={setShowNewInvoiceModal}
+        onSuccess={() => queryClient.invalidateQueries({ queryKey: ["invoices"] })}
+        type="invoice"
+      />
     </div>
   );
 }

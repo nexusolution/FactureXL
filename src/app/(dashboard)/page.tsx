@@ -1,14 +1,15 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FileText, Users, FolderOpen, Download } from "lucide-react";
+import { Pagination } from "@/components/ui/pagination";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import {
-  BarChart,
-  Bar,
+  LineChart,
+  Line,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -24,8 +25,19 @@ import { useLanguage } from "@/lib/i18n";
 const MONTHS_EN = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const MONTHS_FR = ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."];
 
-// Colors for different groups - Using Angular colors
-const COLORS = ["#199ef7", "#38761d", "#f20c1f", "#32bbed", "#ea7005", "#8884d8", "#82ca9d", "#ffc658"];
+// Modern color palette with better contrast and accessibility
+const COLORS = [
+  "#6366f1", // Indigo
+  "#22c55e", // Green
+  "#f59e0b", // Amber
+  "#06b6d4", // Cyan
+  "#ec4899", // Pink
+  "#8b5cf6", // Violet
+  "#14b8a6", // Teal
+  "#f97316", // Orange
+];
+
+const DASHBOARD_ITEMS_PER_PAGE = 10;
 
 export default function DashboardPage() {
   const { t, language } = useLanguage();
@@ -38,6 +50,7 @@ export default function DashboardPage() {
   const [endDate, setEndDate] = useState(
     new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).toISOString().split("T")[0]
   );
+  const [invoicePage, setInvoicePage] = useState(1);
 
   const { data: invoices = [], isLoading: invoicesLoading } = useQuery({
     queryKey: ["invoices"],
@@ -96,6 +109,19 @@ export default function DashboardPage() {
     }),
     [invoices]
   );
+
+  // Pagination for current month invoices
+  const invoiceTotalPages = Math.ceil(currentMonthInvoices.length / DASHBOARD_ITEMS_PER_PAGE);
+  const invoiceStartIndex = (invoicePage - 1) * DASHBOARD_ITEMS_PER_PAGE;
+  const paginatedCurrentMonthInvoices = currentMonthInvoices.slice(
+    invoiceStartIndex,
+    invoiceStartIndex + DASHBOARD_ITEMS_PER_PAGE
+  );
+
+  // Reset invoice page when month changes (invoices data changes)
+  useEffect(() => {
+    setInvoicePage(1);
+  }, [currentMonthInvoices.length]);
 
   // Calculate monthly data for groups
   const groupMonthlyData = useMemo(() => {
@@ -327,9 +353,9 @@ export default function DashboardPage() {
                       </td>
                     </tr>
                   ) : (
-                    currentMonthInvoices.slice(0, 10).map((invoice: any, index: number) => (
+                    paginatedCurrentMonthInvoices.map((invoice: any, index: number) => (
                       <tr key={invoice.id}>
-                        <td className="py-2 px-2 font-medium">{index + 1}</td>
+                        <td className="py-2 px-2 font-medium">{invoiceStartIndex + index + 1}</td>
                         <td className="py-2 px-2">{invoice.client?.name || "-"}</td>
                         <td className="py-2 px-2 font-semibold text-primary">{invoice.ref}</td>
                         <td className="py-2 px-2">{formatDate(invoice.createdAt)}</td>
@@ -340,9 +366,19 @@ export default function DashboardPage() {
                 </tbody>
               </table>
             </div>
-            {currentMonthInvoices.length > 0 && (
+            {currentMonthInvoices.length > DASHBOARD_ITEMS_PER_PAGE && (
+              <Pagination
+                currentPage={invoicePage}
+                totalPages={invoiceTotalPages}
+                totalItems={currentMonthInvoices.length}
+                itemsPerPage={DASHBOARD_ITEMS_PER_PAGE}
+                onPageChange={setInvoicePage}
+                showItemsPerPage={false}
+              />
+            )}
+            {currentMonthInvoices.length > 0 && currentMonthInvoices.length <= DASHBOARD_ITEMS_PER_PAGE && (
               <div className="flex items-center justify-center gap-2 mt-4 text-sm text-muted-foreground">
-                <span>{t("displayingXofY", { x: Math.min(10, currentMonthInvoices.length), y: currentMonthInvoices.length })}</span>
+                <span>{t("displayingXofY", { x: currentMonthInvoices.length, y: currentMonthInvoices.length })}</span>
               </div>
             )}
           </CardContent>
@@ -470,62 +506,123 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      {/* Groupe/mois Chart - Stacked Bar Chart */}
-      <Card className="card-angular">
+      {/* Groupe/mois Chart - Line Chart with Circle Points */}
+      <Card className="card-angular overflow-hidden">
         <CardHeader className="border-b">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-lg font-semibold text-primary">{t("groupPerMonth")}</CardTitle>
-            <div className="text-sm text-muted-foreground font-medium">{t("graphByGroups")}</div>
+            <div>
+              <CardTitle className="text-lg font-semibold text-primary">{t("groupPerMonth")}</CardTitle>
+              <p className="text-sm text-muted-foreground mt-1">{currentYear}</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="px-3 py-1.5 bg-primary/10 text-primary text-xs font-medium rounded-full">
+                {t("graphByGroups")}
+              </span>
+            </div>
           </div>
         </CardHeader>
         <CardContent className="p-6">
-          <div className="h-80">
+          <div className="h-96">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart
+              <LineChart
                 data={chartData}
-                margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                margin={{ top: 20, right: 30, left: 0, bottom: 20 }}
               >
-                <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke="#e5e7eb"
+                  vertical={true}
+                />
                 <XAxis
                   dataKey="name"
-                  tick={{ fontSize: 11, fill: "#666" }}
+                  tick={{ fontSize: 12, fill: "#6b7280", fontWeight: 500 }}
                   tickLine={false}
-                  axisLine={{ stroke: "#ccc" }}
+                  axisLine={{ stroke: "#e5e7eb" }}
+                  dy={10}
                 />
                 <YAxis
-                  tick={{ fontSize: 11, fill: "#666" }}
+                  tick={{ fontSize: 11, fill: "#9ca3af" }}
                   tickLine={false}
-                  axisLine={{ stroke: "#ccc" }}
-                  label={{
-                    value: "Total (XPF)",
-                    angle: -90,
-                    position: "insideLeft",
-                    fontSize: 12,
-                    fill: "#666"
+                  axisLine={{ stroke: "#e5e7eb" }}
+                  tickFormatter={(value) => {
+                    if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`;
+                    if (value >= 1000) return `${(value / 1000).toFixed(0)}K`;
+                    return value.toString();
                   }}
+                  width={60}
                 />
                 <Tooltip
-                  formatter={(value: number) => `${value.toFixed(2)} XPF`}
-                  contentStyle={{
-                    fontSize: 12,
-                    borderRadius: "0.475rem",
-                    border: "1px solid #e0e0e0"
+                  content={({ active, payload, label }) => {
+                    if (active && payload && payload.length) {
+                      const total = payload.reduce((sum: number, entry: any) => sum + (entry.value || 0), 0);
+                      return (
+                        <div className="bg-white p-4 rounded-lg shadow-lg border border-gray-200">
+                          <p className="font-semibold text-gray-900 mb-2 text-sm">{label} {currentYear}</p>
+                          <div className="space-y-1.5">
+                            {payload.map((entry: any, index: number) => (
+                              <div key={index} className="flex items-center justify-between gap-6 text-sm">
+                                <div className="flex items-center gap-2">
+                                  <div
+                                    className="w-3 h-3 rounded-full"
+                                    style={{ backgroundColor: entry.color }}
+                                  />
+                                  <span className="text-gray-600">{entry.name}</span>
+                                </div>
+                                <span className="font-medium text-gray-900">
+                                  {entry.value?.toLocaleString('fr-FR')} XPF
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                          <div className="mt-3 pt-2 border-t border-gray-200 flex justify-between">
+                            <span className="text-sm font-medium text-gray-500">Total</span>
+                            <span className="text-sm font-bold text-primary">
+                              {total.toLocaleString('fr-FR')} XPF
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    }
+                    return null;
                   }}
                 />
                 <Legend
-                  wrapperStyle={{ fontSize: 12 }}
-                  iconType="circle"
+                  wrapperStyle={{ paddingTop: 20 }}
+                  content={({ payload }) => (
+                    <div className="flex flex-wrap justify-center gap-6 mt-4">
+                      {payload?.map((entry: any, index: number) => (
+                        <div key={index} className="flex items-center gap-2">
+                          <div
+                            className="w-3 h-3 rounded-full"
+                            style={{ backgroundColor: entry.color }}
+                          />
+                          <span className="text-sm text-gray-600">{entry.value}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 />
                 {groups.map((group: any, index: number) => (
-                  <Bar
+                  <Line
                     key={group.id}
+                    type="linear"
                     dataKey={group.name}
-                    stackId="a"
-                    fill={COLORS[index % COLORS.length]}
-                    radius={index === groups.length - 1 ? [4, 4, 0, 0] : [0, 0, 0, 0]}
+                    stroke={COLORS[index % COLORS.length]}
+                    strokeWidth={2}
+                    dot={{
+                      r: 6,
+                      fill: COLORS[index % COLORS.length],
+                      strokeWidth: 0,
+                    }}
+                    activeDot={{
+                      r: 8,
+                      fill: COLORS[index % COLORS.length],
+                      strokeWidth: 2,
+                      stroke: "#fff",
+                    }}
                   />
                 ))}
-              </BarChart>
+              </LineChart>
             </ResponsiveContainer>
           </div>
         </CardContent>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,11 +14,16 @@ import { TableSkeleton } from "@/components/ui/loading";
 import { useConfirm } from "@/components/ui/confirm-dialog";
 import axios from "axios";
 import { useLanguage } from "@/lib/i18n";
+import { Pagination } from "@/components/ui/pagination";
+
+const ITEMS_PER_PAGE_DEFAULT = 20;
 
 export default function TransfersPage() {
   const { t } = useLanguage();
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<"all" | "confirmed" | "pending">("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(ITEMS_PER_PAGE_DEFAULT);
   const queryClient = useQueryClient();
   const confirm = useConfirm();
   const { data: session } = useSession();
@@ -82,6 +87,21 @@ export default function TransfersPage() {
       (filter === "pending" && !inv.paid);
     return matchesSearch && matchesFilter;
   });
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredTransfers.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedTransfers = filteredTransfers.slice(startIndex, startIndex + itemsPerPage);
+
+  // Reset to page 1 when filter or search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, filter]);
+
+  const handleItemsPerPageChange = (newItemsPerPage: number) => {
+    setItemsPerPage(newItemsPerPage);
+    setCurrentPage(1);
+  };
 
   const calculateStats = () => {
     const pending = transfers.filter((inv: any) => !inv.paid).length;
@@ -240,9 +260,9 @@ export default function TransfersPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredTransfers.map((transfer: any, index: number) => (
+                  {paginatedTransfers.map((transfer: any, index: number) => (
                     <tr key={transfer.id} className="hover:bg-muted/20 transition-colors">
-                      <td className="font-medium">{index + 1}</td>
+                      <td className="font-medium">{startIndex + index + 1}</td>
                       <td>{transfer.client?.name || "-"}</td>
                       <td className="font-semibold text-primary">{transfer.ref}</td>
                       <td>{formatDate(transfer.createdAt)}</td>
@@ -319,6 +339,18 @@ export default function TransfersPage() {
                 </tbody>
               </table>
             </div>
+          )}
+
+          {/* Pagination */}
+          {filteredTransfers.length > ITEMS_PER_PAGE_DEFAULT && (
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={filteredTransfers.length}
+              itemsPerPage={itemsPerPage}
+              onPageChange={setCurrentPage}
+              onItemsPerPageChange={handleItemsPerPageChange}
+            />
           )}
         </CardContent>
       </Card>
