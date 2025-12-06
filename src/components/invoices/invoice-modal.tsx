@@ -57,14 +57,24 @@ interface Article {
   tax: string;
 }
 
+interface InvoiceData {
+  id: string;
+  clientId: string;
+  employeeId?: string;
+  wording?: string;
+  commentary?: string;
+  items: any[];
+}
+
 interface InvoiceModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess?: () => void;
   type?: "invoice" | "avoir" | "devis";
+  invoice?: InvoiceData | null;
 }
 
-export function InvoiceModal({ open, onOpenChange, onSuccess, type = "invoice" }: InvoiceModalProps) {
+export function InvoiceModal({ open, onOpenChange, onSuccess, type = "invoice", invoice = null }: InvoiceModalProps) {
   const { t, language } = useLanguage();
   const [loading, setLoading] = useState(false);
 
@@ -93,12 +103,40 @@ export function InvoiceModal({ open, onOpenChange, onSuccess, type = "invoice" }
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [groups, setGroups] = useState<Group[]>([]);
 
+  const isEditMode = !!invoice;
+
   // Load initial data when modal opens
   useEffect(() => {
     if (open) {
       loadData();
     }
   }, [open]);
+
+  // Load invoice data when editing
+  useEffect(() => {
+    if (open && invoice) {
+      setClientId(invoice.clientId || "");
+      setEmployeeId(invoice.employeeId || "");
+      setWording(invoice.wording || "");
+      setCommentary(invoice.commentary || "");
+      if (invoice.items && invoice.items.length > 0) {
+        setItems(
+          invoice.items.map((item: any) => ({
+            id: item.id || Math.random().toString(),
+            groupId: item.groupId || "",
+            product: item.product || "",
+            internRef: item.internRef || "",
+            description: item.description || "",
+            quantity: item.quantity || 1,
+            price: item.price || 0,
+            discount: item.discount || 0,
+            unite: item.unite || "",
+            tax: item.tax || 0,
+          }))
+        );
+      }
+    }
+  }, [open, invoice]);
 
   // Reset form when modal closes
   useEffect(() => {
@@ -223,6 +261,16 @@ export function InvoiceModal({ open, onOpenChange, onSuccess, type = "invoice" }
   };
 
   const getTitle = () => {
+    if (isEditMode) {
+      switch (type) {
+        case "avoir":
+          return language === "en" ? "Edit Credit Note" : "Modifier l'avoir";
+        case "devis":
+          return language === "en" ? "Edit Quote" : "Modifier le devis";
+        default:
+          return language === "en" ? "Edit Invoice" : "Modifier la facture";
+      }
+    }
     switch (type) {
       case "avoir":
         return language === "en" ? "New Credit Note" : "Nouvel Avoir";
@@ -273,19 +321,28 @@ export function InvoiceModal({ open, onOpenChange, onSuccess, type = "invoice" }
         })),
       };
 
-      await axios.post("/api/invoices", invoiceData);
+      if (isEditMode && invoice) {
+        await axios.put(`/api/invoices/${invoice.id}`, invoiceData);
+        const successMessage = type === "avoir"
+          ? (language === "en" ? "Credit note updated successfully" : "Avoir modifié avec succès")
+          : type === "devis"
+          ? (language === "en" ? "Quote updated successfully" : "Devis modifié avec succès")
+          : (language === "en" ? "Invoice updated successfully" : "Facture modifiée avec succès");
+        toast.success(successMessage);
+      } else {
+        await axios.post("/api/invoices", invoiceData);
+        const successMessage = type === "avoir"
+          ? (language === "en" ? "Credit note created successfully" : "Avoir créé avec succès")
+          : type === "devis"
+          ? (language === "en" ? "Quote created successfully" : "Devis créé avec succès")
+          : (language === "en" ? "Invoice created successfully" : "Facture créée avec succès");
+        toast.success(successMessage);
+      }
 
-      const successMessage = type === "avoir"
-        ? (language === "en" ? "Credit note created successfully" : "Avoir créé avec succès")
-        : type === "devis"
-        ? (language === "en" ? "Quote created successfully" : "Devis créé avec succès")
-        : (language === "en" ? "Invoice created successfully" : "Facture créée avec succès");
-
-      toast.success(successMessage);
       onOpenChange(false);
       onSuccess?.();
     } catch (error) {
-      toast.error(language === "en" ? "Error creating document" : "Erreur lors de la création");
+      toast.error(language === "en" ? "Error saving document" : "Erreur lors de l'enregistrement");
     } finally {
       setLoading(false);
     }

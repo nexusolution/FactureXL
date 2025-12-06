@@ -12,7 +12,6 @@ import { Plus, Search, Trash2, Edit, Eye, Download, CreditCard, Banknote, Landma
 import { formatDate } from "@/lib/utils";
 import { toast as customToast } from "@/lib/toast";
 import { downloadInvoicePDF } from "@/lib/pdf-generator";
-import Link from "next/link";
 import { TableSkeleton } from "@/components/ui/loading";
 import { useConfirm } from "@/components/ui/confirm-dialog";
 import axios from "axios";
@@ -32,6 +31,7 @@ export default function InvoicesPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(ITEMS_PER_PAGE_DEFAULT);
   const [showNewInvoiceModal, setShowNewInvoiceModal] = useState(false);
+  const [editingInvoice, setEditingInvoice] = useState<any>(null);
   const queryClient = useQueryClient();
   const confirm = useConfirm();
   const { data: session } = useSession();
@@ -212,6 +212,16 @@ export default function InvoicesPage() {
     }
   };
 
+  const handleEdit = async (invoiceId: string) => {
+    try {
+      const response = await axios.get(`/api/invoices/${invoiceId}`);
+      setEditingInvoice(response.data);
+    } catch (error) {
+      console.error("Error fetching invoice:", error);
+      customToast.error("Erreur lors du chargement de la facture");
+    }
+  };
+
   return (
     <div className="container mx-auto py-6">
       {/* Header */}
@@ -388,11 +398,9 @@ export default function InvoicesPage() {
                                 variant="ghost"
                                 size="sm"
                                 title={t("edit")}
-                                asChild
+                                onClick={() => handleEdit(invoice.id)}
                               >
-                                <Link href={`/invoices/${invoice.id}`}>
-                                  <Edit className="h-4 w-4" />
-                                </Link>
+                                <Edit className="h-4 w-4" />
                               </Button>
                               <Button
                                 variant="ghost"
@@ -462,6 +470,15 @@ export default function InvoicesPage() {
         onOpenChange={setShowNewInvoiceModal}
         onSuccess={() => queryClient.invalidateQueries({ queryKey: ["invoices"] })}
         type="invoice"
+      />
+
+      {/* Edit Invoice Modal */}
+      <InvoiceModal
+        open={!!editingInvoice}
+        onOpenChange={(open) => !open && setEditingInvoice(null)}
+        onSuccess={() => queryClient.invalidateQueries({ queryKey: ["invoices"] })}
+        type="invoice"
+        invoice={editingInvoice}
       />
     </div>
   );
